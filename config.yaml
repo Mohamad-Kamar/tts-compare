@@ -1,0 +1,77 @@
+# TTS Comparison Framework Configuration
+# ========================================
+
+# Device configuration (auto-detected if not specified)
+# Options: cuda, mps (Apple Silicon), cpu, auto
+device: auto
+
+# Default engine to use
+default_engine: kokoro
+
+# Engine-specific configurations
+engines:
+  # Kokoro - Lightweight 82M parameter TTS
+  kokoro:
+    default_voice: af_heart
+    default_lang: en-us
+    speed: 1.0
+    # Available voices by category:
+    # american_female: af_heart, af_bella, af_nicole, af_sarah, af_sky
+    # american_male: am_adam, am_michael, am_fenrir
+    # british_female: bf_emma, bf_isabella
+    # british_male: bm_george, bm_lewis
+
+  # Chatterbox - Voice cloning capable TTS
+  chatterbox:
+    # Model variants:
+    # - turbo: 350M params, English, fast, paralinguistic tags
+    # - multilingual: 500M params, 23+ languages
+    # - standard: 500M params, English, CFG tuning
+    model: turbo
+
+    # Generation parameters
+    exaggeration: 0.5  # 0-1, expressiveness
+    cfg_weight: 0.5    # 0-1, guidance weight
+
+  # Qwen3-TTS - State-of-the-art TTS with voice cloning
+  qwen3:
+    # Model size: 0.6B (fast) or 1.7B (high quality)
+    model_size: "0.6B"
+
+    # Model type:
+    # - Base: Voice cloning capable
+    # - CustomVoice: 9 preset voices with instruction control
+    # - VoiceDesign: Natural language voice descriptions (1.7B only)
+    model_type: CustomVoice
+
+    # Default speaker for CustomVoice model
+    default_speaker: Ryan
+
+    # Data type: float16 for MPS, bfloat16 for CUDA
+    dtype: auto
+
+    # Enable flash attention (requires flash-attn package)
+    use_flash_attention: false
+
+    # Available speakers:
+    # chinese: Vivian, Serena, Uncle_Fu, Dylan, Eric
+    # english: Ryan, Aiden
+    # japanese: Ono_Anna
+    # korean: Sohee
+
+# Output settings
+output:
+  directory: output
+  sample_rate: 24000
+  format: wav
+  normalize: true
+
+# Test settings
+tests:
+  # Reference audio for voice cloning tests
+  reference_audio: samples/reference_voice.wav
+
+  # Benchmark settings
+  benchmark:
+    num_runs: 3
+    warmup_runs: 1
