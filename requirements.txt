@@ -1,0 +1,13 @@
+# TTS Compare - Requirements
+# ==========================
+# Use pip extras for installation. This file is for convenience.
+#
+# Recommended: pip install -e ".[kokoro]"
+#
+# Options:
+#   pip install -e ".[kokoro]"      # Kokoro only (lightweight)
+#   pip install -e ".[chatterbox]"  # Kokoro + Chatterbox (voice cloning)
+#   pip install -e ".[qwen3]"       # Kokoro + Qwen3 (highest quality)
+#   pip install -e ".[kokoro,dev]"  # With development tools
+
+-e .[kokoro]

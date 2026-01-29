@@ -1,0 +1,116 @@
+[project]
+name = "tts-compare"
+version = "0.1.0"
+description = "Compare TTS engines: Kokoro (lightweight), Chatterbox (voice cloning), Qwen3 (highest quality)"
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.11,<3.13"
+authors = [{ name = "Your Name" }]
+
+keywords = ["tts", "text-to-speech", "voice-cloning", "kokoro", "chatterbox", "qwen3"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Multimedia :: Sound/Audio :: Speech",
+]
+
+# Core dependencies only - NO TTS engines by default
+# Users choose which engine(s) to install via extras
+dependencies = [
+    "numpy>=1.24.0",
+    "soundfile>=0.12.0",
+    "torch>=2.0.0",
+    "torchaudio>=2.0.0",
+    "pyyaml>=6.0",
+    "click>=8.0.0",
+]
+
+[project.optional-dependencies]
+# TTS Engines - choose based on your needs
+# Kokoro: Lightweight (82M), fast, CPU-friendly, no voice cloning
+kokoro = [
+    "kokoro>=0.9.4",
+]
+
+# Chatterbox: Voice cloning, paralinguistic tags (350-500M params)
+# NOTE: Conflicts with qwen3 (different transformers versions)
+# NOTE: Requires Python 3.11 (chatterbox-tts needs numpy<1.26 which doesn't support 3.12)
+chatterbox = [
+    "kokoro>=0.9.4",
+    "chatterbox-tts>=0.1.6",
+]
+
+# Qwen3: Highest quality, voice cloning, voice design (0.6B-1.7B params)
+# NOTE: Conflicts with chatterbox (different transformers versions)
+qwen3 = [
+    "kokoro>=0.9.4",
+    "qwen-tts>=0.0.5",
+]
+
+# Development tools
+dev = [
+    "pytest>=8.0.0",
+    "pytest-benchmark>=5.0.0",
+    "ruff>=0.8.0",
+]
+
+# Optional audio processing
+audio = [
+    "librosa>=0.10.0",
+]
+
+# Memory profiling
+profiling = [
+    "psutil>=6.0.0",
+]
+
+# Quantization support (4-bit/8-bit) - requires bitsandbytes>=0.49.0 for Apple Silicon
+# Reduces memory usage by 50-75% with minimal quality loss
+quantization = [
+    "bitsandbytes>=0.49.0",
+]
+
+[project.scripts]
+# Main CLI entry point
+tts = "cli.main:main"
+# Legacy entry points (for backward compatibility)
+tts-generate = "cli.generate:main"
+tts-clone = "cli.clone:main"
+tts-benchmark = "cli.benchmark:main"
+
+[project.urls]
+Repository = "https://github.com/yourusername/tts-compare"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["engines", "cli", "utils"]
+
+[tool.uv]
+managed = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"
+python_functions = "test_*"
+markers = [
+    "slow: marks tests as slow",
+    "gpu: marks tests requiring GPU",
+    "voice_cloning: marks voice cloning tests",
+]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W"]
+ignore = ["E501"]
