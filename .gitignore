@@ -37,6 +37,10 @@ output/*.wav
 output/*.mp3
 output/*.flac
 !output/.gitkeep
+output.wav
+
+# Local notes
+notes.txt
 
 # Model cache
 .cache/
