@@ -24,6 +24,7 @@ from engines import (
     get_engine,
     list_engines,
 )
+from utils.audio import save_audio
 
 
 def check_engine_available(engine_name: str) -> bool:
@@ -62,6 +63,32 @@ def check_engine_available(engine_name: str) -> bool:
     return False
 
 
+def _load_text_source(text: str | None, input_file: str | None, use_stdin: bool, parser_error) -> str:
+    sources = sum(bool(source) for source in (text is not None, input_file, use_stdin))
+    if sources > 1:
+        raise parser_error("Use only one of --text, --input, or --stdin.")
+    resolved_text: str | None
+    if input_file:
+        with open(input_file, "r", encoding="utf-8") as f:
+            resolved_text = f.read()
+    elif text is not None:
+        resolved_text = text
+    elif use_stdin:
+        resolved_text = sys.stdin.read()
+    else:
+        raise parser_error("Either --text, --input, or --stdin is required")
+    resolved_text = resolved_text.strip()
+    if not resolved_text:
+        raise parser_error("Input text is empty.")
+    return resolved_text
+
+
+def _print_settings(title: str, values: dict[str, object]) -> None:
+    click.echo(title)
+    for key, value in values.items():
+        click.echo(f"  {key}: {value}")
+
+
 @click.group()
 @click.version_option(version="0.1.0")
 def main():
@@ -93,6 +120,7 @@ def cmd_engines():
 @click.option("--text", "-t", help="Text to synthesize")
 @click.option("--input", "-i", "input_file", type=click.Path(exists=True),
               help="Input text file")
+@click.option("--stdin", is_flag=True, help="Read text from standard input")
 @click.option("--output", "-o", default="output.wav",
               help="Output audio file (default: output.wav)")
 @click.option("--voice", "-v", help="Voice/speaker name")
@@ -116,9 +144,10 @@ def cmd_engines():
               help="Load model in 4-bit precision (Qwen3, ~75%% memory reduction)")
 @click.option("--list-voices", is_flag=True, help="List available voices and exit")
 @click.option("--info", "show_info", is_flag=True, help="Show engine info and exit")
-def cmd_generate(engine, text, input_file, output, voice, language, speed,
+@click.option("--show-settings", is_flag=True, help="Print the resolved runtime settings")
+def cmd_generate(engine, text, input_file, stdin, output, voice, language, speed,
                  device, model, size, model_type, instruct, load_8bit, load_4bit,
-                 list_voices, show_info):
+                 list_voices, show_info, show_settings):
     """Generate speech from text.
 
     \b
@@ -129,8 +158,6 @@ def cmd_generate(engine, text, input_file, output, voice, language, speed,
       tts generate -e qwen3 --size 1.7B --type VoiceDesign --instruct "warm male" -t "Hi" -o warm.wav
       tts generate -e qwen3 --4bit -t "Memory efficient" -o efficient.wav
     """
-    import soundfile as sf
-
     # Early availability check
     if not check_engine_available(engine):
         sys.exit(1)
@@ -174,15 +201,32 @@ def cmd_generate(engine, text, input_file, output, voice, language, speed,
         return
 
     # Get text
-    if input_file:
-        with open(input_file, "r", encoding="utf-8") as f:
-            text = f.read()
-    elif not text:
-        click.echo("Error: Either --text or --input is required", err=True)
+    try:
+        text = _load_text_source(text, input_file, stdin, parser_error=click.UsageError)
+    except click.UsageError as error:
+        click.echo(f"Error: {error}", err=True)
         sys.exit(1)
 
     click.echo(f"Engine: {engine}")
     click.echo(f"Text length: {len(text)} characters")
+
+    if show_settings:
+        _print_settings(
+            "Resolved settings:",
+            {
+                "engine": engine,
+                "output": output,
+                "language": language,
+                "voice": voice or "default",
+                "device": device,
+                "model": model if engine == "chatterbox" else "n/a",
+                "size": size if engine == "qwen3" else "n/a",
+                "type": model_type if engine == "qwen3" else "n/a",
+                "instruct": instruct or "n/a",
+                "8bit": load_8bit,
+                "4bit": load_4bit,
+            },
+        )
 
     # Generate
     generate_kwargs = {"language": language}
@@ -198,7 +242,7 @@ def cmd_generate(engine, text, input_file, output, voice, language, speed,
             generate_kwargs["instruct"] = instruct
 
     audio, sr = tts_engine.generate(text, **generate_kwargs)
-    sf.write(output, audio, sr)
+    save_audio(audio, output, sr, normalize=False)
 
     duration = len(audio) / sr
     click.secho(f"Generated {duration:.2f}s of audio", fg="green")
@@ -215,6 +259,7 @@ def cmd_generate(engine, text, input_file, output, voice, language, speed,
 @click.option("--text", "-t", help="Text to synthesize")
 @click.option("--input", "-i", "input_file", type=click.Path(exists=True),
               help="Input text file")
+@click.option("--stdin", is_flag=True, help="Read text from standard input")
 @click.option("--output", "-o", default="cloned.wav",
               help="Output audio file (default: cloned.wav)")
 @click.option("--language", "-l", default="en", help="Language code (default: en)")
@@ -231,8 +276,9 @@ def cmd_generate(engine, text, input_file, output, voice, language, speed,
               help="Load model in 8-bit precision (Qwen3, ~50%% memory reduction)")
 @click.option("--4bit", "load_4bit", is_flag=True,
               help="Load model in 4-bit precision (Qwen3, ~75%% memory reduction)")
-def cmd_clone(engine, reference, ref_text, text, input_file, output, language,
-              device, model, size, exaggeration, load_8bit, load_4bit):
+@click.option("--show-settings", is_flag=True, help="Print the resolved runtime settings")
+def cmd_clone(engine, reference, ref_text, text, input_file, stdin, output, language,
+              device, model, size, exaggeration, load_8bit, load_4bit, show_settings):
     """Clone a voice from reference audio.
 
     \b
@@ -240,8 +286,6 @@ def cmd_clone(engine, reference, ref_text, text, input_file, output, language,
       tts clone -e chatterbox -r voice.wav -t "Hello in my voice" -o cloned.wav
       tts clone -e qwen3 -r voice.wav --ref-text "transcript" -t "New text" -o cloned.wav
     """
-    import soundfile as sf
-
     # Early availability check
     if not check_engine_available(engine):
         sys.exit(1)
@@ -267,16 +311,33 @@ def cmd_clone(engine, reference, ref_text, text, input_file, output, language,
         sys.exit(1)
 
     # Get text
-    if input_file:
-        with open(input_file, "r", encoding="utf-8") as f:
-            text = f.read()
-    elif not text:
-        click.echo("Error: Either --text or --input is required", err=True)
+    try:
+        text = _load_text_source(text, input_file, stdin, parser_error=click.UsageError)
+    except click.UsageError as error:
+        click.echo(f"Error: {error}", err=True)
         sys.exit(1)
 
     click.echo(f"Engine: {engine}")
     click.echo(f"Reference: {reference}")
     click.echo(f"Text length: {len(text)} characters")
+
+    if show_settings:
+        _print_settings(
+            "Resolved settings:",
+            {
+                "engine": engine,
+                "output": output,
+                "language": language,
+                "device": device,
+                "reference": reference,
+                "ref-text": bool(ref_text),
+                "model": model if engine == "chatterbox" else "n/a",
+                "exaggeration": exaggeration if engine == "chatterbox" else "n/a",
+                "size": size if engine == "qwen3" else "n/a",
+                "8bit": load_8bit,
+                "4bit": load_4bit,
+            },
+        )
 
     # Clone voice
     clone_kwargs = {
@@ -291,7 +352,7 @@ def cmd_clone(engine, reference, ref_text, text, input_file, output, language,
         clone_kwargs["exaggeration"] = exaggeration
 
     audio, sr = tts_engine.clone_voice(**clone_kwargs)
-    sf.write(output, audio, sr)
+    save_audio(audio, output, sr, normalize=False)
 
     duration = len(audio) / sr
     click.secho(f"Generated {duration:.2f}s of audio with cloned voice", fg="green")
@@ -354,6 +415,7 @@ def cmd_benchmark(engines, output, runs, device):
 
     # Save results
     if results:
+        Path(output).parent.mkdir(parents=True, exist_ok=True)
         with open(output, "w") as f:
             json.dump(results, f, indent=2)
         click.secho(f"\nResults saved to: {output}", fg="green")

@@ -9,7 +9,7 @@ import argparse
 import sys
 from pathlib import Path
 
-import soundfile as sf
+from utils.audio import save_audio
 
 
 def main():
@@ -58,6 +58,11 @@ Note: Kokoro does not support voice cloning.
         "--input", "-i",
         type=str,
         help="Input text file",
+    )
+    parser.add_argument(
+        "--stdin",
+        action="store_true",
+        help="Read text from standard input",
     )
     parser.add_argument(
         "--output", "-o",
@@ -141,13 +146,23 @@ Note: Kokoro does not support voice cloning.
     engine = get_engine(args.engine, **engine_kwargs)
 
     # Get text
+    sources = sum(bool(source) for source in (args.text is not None, args.input, args.stdin))
+    if sources > 1:
+        parser.error("Use only one of --text, --input, or --stdin")
+
     if args.input:
         with open(args.input, "r", encoding="utf-8") as f:
             text = f.read()
     elif args.text:
         text = args.text
+    elif args.stdin:
+        text = sys.stdin.read()
     else:
-        parser.error("Either --text or --input is required")
+        parser.error("Either --text, --input, or --stdin is required")
+
+    text = text.strip()
+    if not text:
+        parser.error("Input text is empty")
 
     print(f"Engine: {args.engine}")
     print(f"Reference: {args.reference}")
@@ -168,7 +183,7 @@ Note: Kokoro does not support voice cloning.
     audio, sr = engine.clone_voice(**clone_kwargs)
 
     # Save output
-    sf.write(args.output, audio, sr)
+    save_audio(audio, args.output, sr, normalize=False)
 
     duration = len(audio) / sr
     print(f"Generated {duration:.2f}s of audio with cloned voice")

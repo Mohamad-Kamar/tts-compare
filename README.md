@@ -48,6 +48,7 @@ tts generate -e kokoro -t "Hello, world!" -o hello.wav
 ```bash
 # Generate speech
 tts generate -e kokoro -t "Hello, world!" -o hello.wav
+tts generate -e kokoro --stdin -o hello.wav
 
 # Generate from text file
 tts generate -e kokoro -i notes.txt -o output.wav
@@ -60,6 +61,9 @@ tts generate -e kokoro --list-voices
 
 # Check which engines are installed
 tts engines
+
+# Inspect resolved settings
+tts generate -e kokoro -t "Hello" --show-settings
 ```
 
 ## Switching Engines

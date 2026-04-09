@@ -265,6 +265,7 @@ It had a perfectly round door like a porthole, painted green, with a shiny yello
     # Save results
     if args.output:
         output_path = Path(args.output)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
         with open(output_path, "w") as f:
             json.dump(results, f, indent=2)
         print(f"\nResults saved to: {args.output}")

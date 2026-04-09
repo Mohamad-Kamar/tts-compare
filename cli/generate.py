@@ -10,7 +10,7 @@ import argparse
 import sys
 from pathlib import Path
 
-import soundfile as sf
+from utils.audio import save_audio
 
 
 def main():
@@ -56,6 +56,11 @@ def main():
         "--input", "-i",
         type=str,
         help="Input text file",
+    )
+    parser.add_argument(
+        "--stdin",
+        action="store_true",
+        help="Read text from standard input",
     )
     parser.add_argument(
         "--output", "-o",
@@ -202,13 +207,23 @@ def main():
         return
 
     # Get text
+    sources = sum(bool(source) for source in (args.text is not None, args.input, args.stdin))
+    if sources > 1:
+        parser.error("Use only one of --text, --input, or --stdin")
+
     if args.input:
         with open(args.input, "r", encoding="utf-8") as f:
             text = f.read()
     elif args.text:
         text = args.text
+    elif args.stdin:
+        text = sys.stdin.read()
     else:
-        parser.error("Either --text or --input is required")
+        parser.error("Either --text, --input, or --stdin is required")
+
+    text = text.strip()
+    if not text:
+        parser.error("Input text is empty")
 
     print(f"Engine: {args.engine}")
     print(f"Text length: {len(text)} characters")
@@ -236,7 +251,7 @@ def main():
                 exaggeration=args.exaggeration,
                 cfg_weight=args.cfg_weight,
             )
-        sf.write(args.output, audio, sr)
+        save_audio(audio, args.output, sr, normalize=False)
         print(f"Saved to {args.output}")
         return
 
@@ -255,13 +270,13 @@ def main():
             )
         else:
             audio, sr = engine.generate(text, **generate_kwargs)
-        sf.write(args.output, audio, sr)
+        save_audio(audio, args.output, sr, normalize=False)
         print(f"Saved to {args.output}")
         return
 
     # Default generation (Kokoro)
     audio, sr = engine.generate(text, **generate_kwargs)
-    sf.write(args.output, audio, sr)
+    save_audio(audio, args.output, sr, normalize=False)
 
     duration = len(audio) / sr
     print(f"Generated {duration:.2f}s of audio")
