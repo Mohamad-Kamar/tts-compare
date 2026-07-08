@@ -334,24 +334,18 @@ class Qwen3Engine(TTSEngine):
         # Quantization support (requires bitsandbytes>=0.49.0 for Apple Silicon)
         if self._load_in_4bit:
             try:
-                import importlib.util
-                if importlib.util.find_spec("bitsandbytes") is not None:
-                    load_kwargs["load_in_4bit"] = True
-                    load_kwargs["bnb_4bit_compute_dtype"] = torch.float16
-                    logger.info("4-bit quantization enabled (75% memory reduction)")
-                else:
-                    raise ImportError("bitsandbytes not found")
+                import bitsandbytes  # noqa: F401
+                load_kwargs["load_in_4bit"] = True
+                load_kwargs["bnb_4bit_compute_dtype"] = torch.float16
+                logger.info("4-bit quantization enabled (75% memory reduction)")
             except ImportError:
                 logger.warning("bitsandbytes not installed, falling back to full precision. "
                              "Install with: pip install bitsandbytes>=0.49.0")
         elif self._load_in_8bit:
             try:
-                import importlib.util
-                if importlib.util.find_spec("bitsandbytes") is not None:
-                    load_kwargs["load_in_8bit"] = True
-                    logger.info("8-bit quantization enabled (50% memory reduction)")
-                else:
-                    raise ImportError("bitsandbytes not found")
+                import bitsandbytes  # noqa: F401
+                load_kwargs["load_in_8bit"] = True
+                logger.info("8-bit quantization enabled (50% memory reduction)")
             except ImportError:
                 logger.warning("bitsandbytes not installed, falling back to full precision. "
                              "Install with: pip install bitsandbytes>=0.49.0")
