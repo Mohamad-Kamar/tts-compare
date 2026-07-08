@@ -10,7 +10,6 @@ import argparse
 import json
 import sys
 import time
-from dataclasses import asdict
 from pathlib import Path
 from typing import Dict, List
 
@@ -28,8 +27,8 @@ def run_benchmarks(
 ) -> List[Dict]:
     """Run benchmarks on specified engines."""
     sys.path.insert(0, str(Path(__file__).parent.parent))
-    from engines import get_engine, get_available_engines, EngineNotAvailableError
-    from utils.metrics import get_memory_usage, calculate_rtf
+    from engines import get_available_engines, get_engine
+    from utils.metrics import calculate_rtf, get_memory_usage
 
     # Filter to only available engines
     available = get_available_engines()
@@ -76,8 +75,6 @@ def run_benchmarks(
                     audio_durations = []
 
                     for run in range(num_runs):
-                        mem_before = get_memory_usage()
-
                         start = time.perf_counter()
                         try:
                             audio, sr = engine.generate(text)
@@ -89,8 +86,6 @@ def run_benchmarks(
                         except Exception as e:
                             print(f"    Run {run+1} failed: {e}")
                             continue
-
-                        mem_after = get_memory_usage()
 
                     if run_times:
                         avg_time = np.mean(run_times)

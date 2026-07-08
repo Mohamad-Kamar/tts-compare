@@ -18,7 +18,6 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from engines import get_available_engines, get_engine
 
-
 # Test text samples
 SHORT_TEXT = "Hello, this is a test."
 MEDIUM_TEXT = "The quick brown fox jumps over the lazy dog. This sentence contains every letter of the English alphabet."

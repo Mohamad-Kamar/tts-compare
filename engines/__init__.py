@@ -15,15 +15,9 @@ Usage:
     audio, sr = engine.generate("Hello, world!")
 """
 
-from typing import TYPE_CHECKING, Dict, Optional, Type
+from typing import Dict
 
-from .base import TTSEngine, EngineNotAvailableError
-
-if TYPE_CHECKING:
-    from .kokoro_engine import KokoroEngine
-    from .chatterbox_engine import ChatterboxEngine
-    from .qwen3_engine import Qwen3Engine
-
+from .base import EngineNotAvailableError, TTSEngine
 
 # Engine metadata registry
 # This defines all known engines and their properties
@@ -107,7 +101,6 @@ def list_engines(print_output: bool = True) -> str:
     for name, info in ENGINE_INFO.items():
         is_available = available[name]
         symbol = "[+]" if is_available else "[ ]"
-        status = "INSTALLED" if is_available else "not installed"
 
         lines.append(f"{symbol} {name:12} - {info['description']}")
 

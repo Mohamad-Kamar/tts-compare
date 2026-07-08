@@ -189,6 +189,7 @@ class KokoroEngine(TTSEngine):
 def main():
     """Standalone CLI for Kokoro TTS."""
     import argparse
+
     import soundfile as sf
 
     parser = argparse.ArgumentParser(description="Kokoro TTS - Standalone Generator")

@@ -457,6 +457,7 @@ class ChatterboxEngine(TTSEngine):
 def main():
     """Standalone CLI for Chatterbox TTS."""
     import argparse
+
     import torchaudio as ta
 
     parser = argparse.ArgumentParser(description="Chatterbox TTS - Standalone Generator")

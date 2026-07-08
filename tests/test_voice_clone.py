@@ -3,7 +3,7 @@
 import numpy as np
 import pytest
 
-from .conftest import SHORT_TEXT, MEDIUM_TEXT
+from .conftest import MEDIUM_TEXT, SHORT_TEXT
 
 
 @pytest.mark.voice_cloning
