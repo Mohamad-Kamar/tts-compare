@@ -157,7 +157,7 @@ def main():
 
     # Import engines
     sys.path.insert(0, str(Path(__file__).parent.parent))
-    from engines import get_engine, get_available_engines, ENGINE_INFO, EngineNotAvailableError
+    from engines import ENGINE_INFO, get_available_engines, get_engine
 
     # Early availability check with helpful error message
     available = get_available_engines()

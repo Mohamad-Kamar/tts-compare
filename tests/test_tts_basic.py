@@ -3,7 +3,7 @@
 import numpy as np
 import pytest
 
-from .conftest import SHORT_TEXT, MEDIUM_TEXT, LONG_TEXT
+from .conftest import LONG_TEXT, MEDIUM_TEXT, SHORT_TEXT
 
 
 class TestKokoroBasic:

@@ -375,6 +375,7 @@ def cmd_benchmark(engines, output, runs, device):
       tts benchmark --engines all --runs 5
     """
     import json
+
     from cli.benchmark import run_benchmarks
 
     available = get_available_engines()

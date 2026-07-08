@@ -2,9 +2,12 @@
 
 import time
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, Optional, Tuple
+from typing import TYPE_CHECKING, Callable, Dict, Optional, Tuple
 
 import numpy as np
+
+if TYPE_CHECKING:
+    from engines.base import TTSEngine
 
 
 @dataclass
@@ -346,13 +349,9 @@ def run_benchmark(
     audio_durations = []
 
     for _ in range(num_runs):
-        start_mem = get_memory_usage()
-
         start_time = time.perf_counter()
         audio, sr = engine.generate(text, **generate_kwargs)
         end_time = time.perf_counter()
-
-        end_mem = get_memory_usage()
 
         times.append(end_time - start_time)
         audio_durations.append(len(audio) / sr)

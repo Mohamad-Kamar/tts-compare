@@ -2,11 +2,11 @@
 
 import time
 
-import numpy as np
 import pytest
 
 from utils.metrics import calculate_rtf, measure_latency, run_benchmark
-from .conftest import SHORT_TEXT, MEDIUM_TEXT, LONG_TEXT
+
+from .conftest import MEDIUM_TEXT, SHORT_TEXT
 
 
 class TestRTFCalculation:
@@ -205,7 +205,6 @@ class TestMemoryUsage:
         """Test memory usage after generation."""
         from utils.metrics import get_memory_usage
 
-        mem_before = get_memory_usage()
         kokoro_engine.generate(MEDIUM_TEXT)
         mem_after = get_memory_usage()
 
@@ -228,6 +227,7 @@ class TestChatterboxMemory:
     def test_memory_after_single_generation(self):
         """Verify memory cleanup works after single generation."""
         import gc
+
         from engines.chatterbox_engine import get_memory_gb
 
         # Warmup and establish baseline
@@ -255,6 +255,7 @@ class TestChatterboxMemory:
         but our mitigations should limit per-generation growth.
         """
         import gc
+
         from engines.chatterbox_engine import get_memory_gb
 
         # Warmup
@@ -281,6 +282,7 @@ class TestChatterboxMemory:
     def test_unload_model_releases_memory(self):
         """Test that unload_model() actually releases significant memory."""
         import gc
+
         from engines.chatterbox_engine import get_memory_gb
 
         # Ensure model is loaded
@@ -298,7 +300,6 @@ class TestChatterboxMemory:
         mem_unloaded = get_memory_gb()
 
         # Should free significant memory (model is 350MB+ params)
-        freed_gb = mem_loaded - mem_unloaded
         # Note: On some systems memory may not be immediately returned to OS
         # So we just verify it doesn't INCREASE significantly
         assert mem_unloaded <= mem_loaded + 0.1, (
@@ -308,6 +309,7 @@ class TestChatterboxMemory:
     def test_context_manager_cleanup(self):
         """Test context manager properly cleans up model."""
         import gc
+
         from engines import get_engine
         from engines.chatterbox_engine import get_memory_gb
 
@@ -329,7 +331,6 @@ class TestChatterboxMemory:
 
     def test_chunking_reduces_peak_memory(self):
         """Test that chunking long text reduces peak memory vs single call."""
-        from engines.chatterbox_engine import get_memory_gb
 
         # This test verifies the Issue #191 recommendation is effective
         # Use a moderately long text that would be chunked
@@ -347,6 +348,7 @@ class TestChatterboxMemory:
     def test_switch_model_clears_memory(self):
         """Test that switching models doesn't accumulate memory."""
         import gc
+
         from engines.chatterbox_engine import get_memory_gb
 
         # Start with turbo
@@ -389,6 +391,7 @@ class TestQwen3Memory:
     def test_memory_after_single_generation(self):
         """Verify memory cleanup works after single generation."""
         import gc
+
         from engines.chatterbox_engine import get_memory_gb
 
         # Warmup and establish baseline
@@ -416,6 +419,7 @@ class TestQwen3Memory:
         accumulate memory over repeated generations.
         """
         import gc
+
         from engines.chatterbox_engine import get_memory_gb
 
         # Warmup
@@ -442,6 +446,7 @@ class TestQwen3Memory:
     def test_unload_model_releases_memory(self):
         """Test that unload_model() releases memory."""
         import gc
+
         from engines.chatterbox_engine import get_memory_gb
 
         # Ensure model is loaded
@@ -466,6 +471,7 @@ class TestQwen3Memory:
     def test_context_manager_cleanup(self):
         """Test context manager properly cleans up model."""
         import gc
+
         from engines import get_engine
         from engines.chatterbox_engine import get_memory_gb
 
@@ -488,6 +494,7 @@ class TestQwen3Memory:
     def test_switch_model_clears_memory(self):
         """Test that switching model types doesn't accumulate memory."""
         import gc
+
         from engines.chatterbox_engine import get_memory_gb
 
         # Start with CustomVoice

@@ -334,7 +334,7 @@ class Qwen3Engine(TTSEngine):
         # Quantization support (requires bitsandbytes>=0.49.0 for Apple Silicon)
         if self._load_in_4bit:
             try:
-                import bitsandbytes
+                import bitsandbytes  # noqa: F401
                 load_kwargs["load_in_4bit"] = True
                 load_kwargs["bnb_4bit_compute_dtype"] = torch.float16
                 logger.info("4-bit quantization enabled (75% memory reduction)")
@@ -343,7 +343,7 @@ class Qwen3Engine(TTSEngine):
                              "Install with: pip install bitsandbytes>=0.49.0")
         elif self._load_in_8bit:
             try:
-                import bitsandbytes
+                import bitsandbytes  # noqa: F401
                 load_kwargs["load_in_8bit"] = True
                 logger.info("8-bit quantization enabled (50% memory reduction)")
             except ImportError:
@@ -689,6 +689,7 @@ class Qwen3Engine(TTSEngine):
 def main():
     """Standalone CLI for Qwen3-TTS."""
     import argparse
+
     import soundfile as sf
 
     parser = argparse.ArgumentParser(description="Qwen3-TTS - Standalone Generator")
